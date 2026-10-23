@@ -1,5 +1,6 @@
 # 下載下來的檔案（他人的內容，不要一起公開）
 downloads/
+downloads_*/
 *.part
 
 # Python

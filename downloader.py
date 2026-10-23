@@ -20,11 +20,12 @@ import os
 import re
 import ssl
 import sys
+from html import unescape
 from html.parser import HTMLParser
 from urllib.parse import quote, unquote, urljoin, urlparse
 from urllib.request import Request, urlopen
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 # 預設視為「檔案」的副檔名
 DEFAULT_EXTS = {
@@ -96,16 +97,31 @@ def fetch_page(url, timeout):
         return resp.read().decode(charset, errors="replace")
 
 
+def find_embedded_urls(html, exts):
+    """
+    找出藏在 <script> 或 JSON 資料裡的檔案網址。
+    有些網站的「下載」是 <button>，網址只存在給 JavaScript 用的資料中。
+    """
+    text = html.replace("\\/", "/").replace("\\u002F", "/")
+    ext_pattern = "|".join(sorted(map(re.escape, exts), key=len, reverse=True))
+    pattern = re.compile(
+        rf"""https?://[^\s"'<>\\]+?\.(?:{ext_pattern})(?![\w])(?:\?[^\s"'<>\\#]*)?""",
+        re.IGNORECASE,
+    )
+    return [unescape(m.group(0)) for m in pattern.finditer(text)]
+
+
 def find_file_links(page_url, html, exts):
     parser = LinkParser()
     parser.feed(html)
     seen, result = set(), []
-    for link in parser.links:
+    for link in parser.links + find_embedded_urls(html, exts):
         full = urljoin(page_url, link.strip()).split("#")[0]
         if not full.startswith(("http://", "https://")):
             continue
-        if get_ext(full) in exts and full not in seen:
-            seen.add(full)
+        key = unquote(full)  # 同一個網址可能一個有編碼、一個沒有
+        if get_ext(full) in exts and key not in seen:
+            seen.add(key)
             result.append(full)
     return result
 
