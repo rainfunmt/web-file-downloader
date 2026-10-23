@@ -1,0 +1,13 @@
+# 下載下來的檔案（他人的內容，不要一起公開）
+downloads/
+*.part
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 系統檔
+.DS_Store
+Thumbs.db
