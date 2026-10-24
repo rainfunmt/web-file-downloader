@@ -12,3 +12,8 @@ venv/
 # 系統檔
 .DS_Store
 Thumbs.db
+
+# 打包產生的檔案（.exe 請放到 GitHub Releases，不要 commit）
+build/
+dist/
+*.spec
